@@ -1,0 +1,65 @@
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.pyc
+
+# Configuration du système d'exploitation
+.DS_Store
+Thumbs.db
+
+# Répertoires IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Fichiers temporaires
+*.swp
+*.tmp
+*.bak
+*.log
+
+# Types de fichier raster
+*.tiff
+*.tif
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.asc
+*.grd
+*.vrt
+*.tif.aux.xml
+.vrt
+*.zip
+
+# QGIS
+*.qgs~
+*.qgz~
+*.qgz
+*.qmd
+
+# Fichier .csv e .xlsx
+*.xlsx
+*.odt
+
+# Données rapport
+diagramme/
+*.docx
+*.m4a
+old_scripts/
+docs_reference/
+
+# Fichiers spécifiques
+*.yml
+installation_environment.md
+peupleraies_grid_10m_2154_metrics.gpkg
+peupleraies_metriques.gpkg
+
+# Dossiers spécifiques
+stacks/
+stacks/confidence/
+stacks/lidar/
+data_brut/
+data_final/tableaux/olds
