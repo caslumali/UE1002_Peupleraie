@@ -288,9 +288,10 @@ def grid_boxnotch_confidenceXage_par_anne(df, cultivar, output_path, color_palet
         f"Grille de boxplots pour le cultivar '{cultivar}' sauvegardée sous le nom '{filename}'.")
 
 
-def boxnotch_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf):
+def boxnotch_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf, output_path, cultivar_index):
     """
     Génère un boxplot avec encoches et nuage de points pour une métrique Lidar donnée en fonction de l'âge de plantation.
+    Sauvegarde le graphique dans un PDF et en PNG individuellement avec un index basé sur le cultivar.
 
     Args:
         df (DataFrame): Le DataFrame contenant les données filtrées.
@@ -299,9 +300,11 @@ def boxnotch_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf):
         color_map (dict): Un dictionnaire associant chaque 'source' à une couleur spécifique.
         y_limits (tuple): Les limites de l'axe Y pour la métrique en cours.
         pdf (PdfPages): Un objet PdfPages pour sauvegarder le graphique dans un fichier PDF combiné.
+        output_path (str): Le chemin du dossier pour sauvegarder les fichiers PNG individuels.
+        cultivar_index (int): L'index basé sur le cultivar.
 
     Returns:
-        None: Sauvegarde le graphique uniquement dans le PDF.
+        None: Sauvegarde les graphiques dans le PDF et en PNG.
     """
     # Dictionnaire des noms complets des métriques Lidar
     metric_names = {
@@ -404,14 +407,20 @@ def boxnotch_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf):
     # Ajouter le graphique au PDF
     pdf.savefig(fig)
 
+    # Sauvegarder le graphique comme PNG com index do cultivar
+    filename = f"{cultivar_index:02d}_{cultivar}_{metric}.png".replace(
+        "/", "_")
+    filepath = os.path.join(output_path, filename)
+    plt.savefig(filepath, bbox_inches="tight", dpi=300)
+
     # Fermer la figure
     plt.close(fig)
 
 
-def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf):
+def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf, output_path, cultivar_index):
     """
     Génère deux graphiques par page : un pour la "Probabilité d’appartenance (%)"
-    et un pour une métrique Lidar spécifique.
+    et un pour une métrique Lidar spécifique, et sauvegarde chaque graphique individuellement en PNG.
 
     Args:
         df (DataFrame): Le DataFrame filtré.
@@ -420,9 +429,11 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
         color_map (dict): Un dictionnaire associant chaque 'source' à une couleur.
         y_limits (tuple): Les limites de l'axe Y pour la métrique Lidar.
         pdf (PdfPages): Un objet PdfPages pour sauvegarder les graphiques au format PDF.
+        output_path (str): Le chemin du dossier pour sauvegarder les fichiers PNG individuels.
+        cultivar_index (int): L'index basé sur le cultivar.
 
     Returns:
-        None: Sauvegarde les deux graphiques sur une page du PDF.
+        None: Sauvegarde les deux graphiques sur une page du PDF et en PNG.
     """
     # Dictionnaire des noms complets pour les métriques Lidar
     metric_names = {
@@ -509,7 +520,7 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     ax1.set_xticks(positions)
     ax1.set_xticklabels([str(age) for age in age_categories], fontsize=12)
     ax1.set_xlim(0.5, len(age_categories) + 0.5)
-    ax1.set_ylim(0, 100)  # Limites fixes pour la probabilité
+    ax1.set_ylim(0, 102)  # Limites fixes pour la probabilité
 
     # === Graphique 2 : Métrique Lidar ===
     ax2 = axes[1]
@@ -560,6 +571,12 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
 
     # Ajouter les deux graphiques à la page PDF
     pdf.savefig(fig)
+
+    # Sauvegarder les graphiques en PNG
+    filename = f"{cultivar_index:02d}_{cultivar}_{metric}.png".replace(
+        "/", "_")
+    filepath = os.path.join(output_path, filename)
+    plt.savefig(filepath, bbox_inches="tight", dpi=300)
 
     # Fermer la figure
     plt.close(fig)
