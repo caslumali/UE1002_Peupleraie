@@ -31,7 +31,7 @@ Thumbs.db
 *.grd
 *.vrt
 *.tif.aux.xml
-.vrt
+*.vrt
 *.zip
 
 # QGIS
@@ -40,14 +40,14 @@ Thumbs.db
 *.qgz
 *.qmd
 
-# Fichier .csv e .xlsx
-*.xlsx
+# Fichier .odt
 *.odt
 
 # Données rapport
 diagramme/
 *.docx
 *.m4a
+*.wmv
 old_scripts/
 docs_reference/
 
@@ -58,8 +58,14 @@ peupleraies_grid_10m_2154_metrics.gpkg
 peupleraies_metriques.gpkg
 
 # Dossiers spécifiques
-stacks/
-stacks/confidence/
-stacks/lidar/
-data_brut/
+stacks/confidence/*
+!stacks/confidence/.gitkeep
+
+stacks/lidar/*
+!stacks/lidar/.gitkeep
+
+
+data_brut/vector/*
+!data_brut/vector/.gitkeep
+
 data_final/tableaux/olds
