@@ -90,6 +90,10 @@ def nettoyer_gpkg(df, colonnes_a_conserver, dictionnaire_noms, couche_nom, echel
     Returns:
         GeoDataFrame: Données nettoyées et cohérentes.
     """
+    # Nombre initial de parcelles
+    nb_initial = len(df)
+    print(
+        f"Département {couche_nom} : Nombre initial de parcelles : {nb_initial}")
 
     # 1. Vérifier que l'objet est un GeoDataFrame avec une colonne 'geometry'
     df = gpd.GeoDataFrame(df, geometry='geometry', crs=df.crs)
@@ -148,7 +152,7 @@ def nettoyer_gpkg(df, colonnes_a_conserver, dictionnaire_noms, couche_nom, echel
                             'Z_mean', 'densite', 'biomass_mean', 'lidar_date', 'geometry']
     elif echelle == 'pixel':
         colonnes_finales = ['unique_id', 'id_parc', 'annee_plan', 'cultivar_n',
-                            'source', 'lidar_date', 'geometry']
+                            'source', 'densite', 'lidar_date', 'geometry']
     else:
         # Lancer une erreur si l'échelle n'est pas valide
         raise ValueError(
@@ -160,7 +164,12 @@ def nettoyer_gpkg(df, colonnes_a_conserver, dictionnaire_noms, couche_nom, echel
             df[col] = pd.NA
 
     # 10. Filtrer les parcelles pour ne garder que celles avec un seul cultivar
+    nb_avant_filtrage = len(df)
     df = df[df['cultivar'].apply(seul_cultivar)]
+    nb_apres_filtrage = len(df)
+
+    print(
+        f"Département {couche_nom} : Parcelles filtrées : {nb_avant_filtrage - nb_apres_filtrage}")
 
     # 11. Retourner le GeoDataFrame final avec les colonnes organisées
     return df[colonnes_finales]

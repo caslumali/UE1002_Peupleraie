@@ -202,7 +202,7 @@ def jointure_pixel(df_pixels, peupleraies_merged):
     # Liste des colonnes pertinentes pour l'échelle du pixel
     cols = [
         'unique_id', 'id_parc', 'annee_plan', 'cultivar', 'cultivar_n',
-        'source', 'lidar_date'
+        'source', 'densite', 'lidar_date'
     ]
 
     # Renommer les colonnes qui contiennent le suffixe '_right'
