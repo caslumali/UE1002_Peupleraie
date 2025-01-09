@@ -44,8 +44,11 @@ Thumbs.db
 *.odt
 
 # Données rapport
-diagramme/
+diagramme/*
+!diagramme/.gitkeep
+
 *.docx
+*.drawio
 *.m4a
 *.wmv
 old_scripts/
