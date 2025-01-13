@@ -522,6 +522,12 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     ax1.set_xlim(0.5, len(age_categories) + 0.5)
     ax1.set_ylim(0, 102)  # Limites fixes pour la probabilité
 
+    # Ajouter la légende pour le graphique 1
+    handles = [plt.Line2D([0], [0], marker='o', color=color, linestyle='None', markersize=8, label=source)
+               for source, color in color_map.items()]
+    ax1.legend(handles=handles, title='Départament',
+               loc='upper left', bbox_to_anchor=(1, 1))
+
     # === Graphique 2 : Métrique Lidar ===
     ax2 = axes[1]
     mid_y_metric = (y_limits[0] + y_limits[1]) / 2
@@ -568,6 +574,12 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     ax2.set_xticklabels([str(age) for age in age_categories], fontsize=12)
     ax2.set_xlim(0.5, len(age_categories) + 0.5)
     ax2.set_ylim(*y_limits)  # Limites spécifiques pour la métrique
+
+    # Ajouter la légende pour le graphique 2
+    handles = [plt.Line2D([0], [0], marker='o', color=color, linestyle='None', markersize=8, label=source)
+               for source, color in color_map.items()]
+    ax2.legend(handles=handles, title='Départament',
+               loc='upper left', bbox_to_anchor=(1, 1))
 
     # Ajouter les deux graphiques à la page PDF
     pdf.savefig(fig)
