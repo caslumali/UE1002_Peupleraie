@@ -75,20 +75,20 @@ def create_vrt(base_dir, zone, annees, raster_type, output_dir, rasters=None):
         return None
 
 
-def mask_vrt(vrt_path, gpkg_path, output_dir, output_name, nodata_value, dtype_value):
+def clip_raster(raster_path, gpkg_path, output_dir, output_name, nodata_value, dtype_value):
     """
-    Applique un masque à un VRT en utilisant un shapefile et gère nodata/dtype.
+    Applique une découpe à un raster en utilisant un shapefile et gère nodata/dtype.
 
     Args:
-        vrt_path (str): Chemin du fichier VRT.
-        gpkg_path (str): Chemin du fichier GeoPackage pour le masque.
+        raster_path (str): Chemin du fichier VRT.
+        gpkg_path (str): Chemin du fichier GeoPackage pour la découpe.
         output_dir (str): Répertoire de sortie.
         output_name (str): Nom du fichier raster de sortie.
         nodata_value (int/float): Valeur NoData à attribuer.
         dtype_value (str): Type de données à utiliser (ex: 'int16', 'float32').
 
     Returns:
-        str: Chemin du raster masqué.
+        str: Chemin du raster découpe.
     """
     # Charger le shapefile et appliquer un buffer de -10 m pour exclure les pixels en bordure
     shapes = gpd.read_file(gpkg_path, layer='peupleraies_merged_parcelle')
@@ -102,7 +102,7 @@ def mask_vrt(vrt_path, gpkg_path, output_dir, output_name, nodata_value, dtype_v
         raise ValueError("Le shapefile est vide après application du buffer.")
 
     # Ouvrir le VRT
-    with rasterio.open(vrt_path) as src:
+    with rasterio.open(raster_path) as src:
         out_image, out_transform = mask(
             src, shapes.geometry, crop=True, nodata=nodata_value
         )
@@ -119,13 +119,13 @@ def mask_vrt(vrt_path, gpkg_path, output_dir, output_name, nodata_value, dtype_v
             "compress": "LZW"
         })
 
-        # Sauvegarder le raster masqué
+        # Sauvegarder le raster découpe
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f'{output_name}.tif')
         with rasterio.open(output_path, 'w', **out_meta) as dst:
             dst.write(out_image.astype(dtype_value))
 
-        print(f"Raster masqué enregistré à : {output_path}")
+        print(f"Raster découpe enregistré à : {output_path}")
         return output_path
 
 
@@ -136,7 +136,7 @@ def clip_and_align_raster(input_raster, reference_raster, output_raster):
     Args:
         input_raster (str): Chemin du raster lidar à aligner.
         reference_raster (str): Chemin du raster de référence.
-        output_raster (str): Chemin de sortie pour le raster aligné et clipé.
+        output_raster (str): Chemin de sortie pour le raster aligné et découpe.
     """
     with rasterio.open(reference_raster) as ref:
         ref_transform = ref.transform
@@ -188,7 +188,7 @@ def clip_and_align_raster(input_raster, reference_raster, output_raster):
     with rasterio.open(output_raster, "w", **profile) as dst:
         dst.write(aligned_data, 1)
 
-    print(f"Raster clipé et aligné sauvegardé : {output_raster}")
+    print(f"Raster aligné sauvegardé à : {output_raster}")
 
 
 def verifier_raster(raster_path):
