@@ -42,14 +42,15 @@ def top_cultivars(df, max_age=12, min_years=6, top_n=20):
     return valid_cultivars
 
 
-def boxnotch_confidenceXage(df, cultivar, index, output_path, color_map=None, pdf=None):
+def boxnotch_confidenceXage(df, cultivar=None, index=None, output_path=None, color_map=None, pdf=None):
     """
-    Génère un boxplot avec encoches pour un cultivar donné, en ajoutant des statistiques et des points colorés.
+    Génère un boxplot avec encoches pour un cultivar donné ou pour tout le DataFrame si aucun cultivar n'est spécifié,
+    en ajoutant des statistiques et des points colorés.
 
     Args:
         df (DataFrame): Le DataFrame contenant les données filtrées.
-        cultivar (str): Le nom du cultivar à analyser.
-        index (int): L'index pour nommer et ordonner les fichiers de sortie.
+        cultivar (str, optional): Le nom du cultivar à analyser. Si None, utilise tout le DataFrame.
+        index (int, optional): L'index pour nommer et ordonner les fichiers de sortie. Ignoré si aucun cultivar.
         output_path (str): Le chemin du dossier pour sauvegarder l'image générée.
         color_map (dict, optional): Un dictionnaire associant chaque 'source' à une couleur spécifique.
         pdf (PdfPages, optional): Un objet PdfPages pour sauvegarder le graphique dans un fichier PDF combiné.
@@ -57,13 +58,16 @@ def boxnotch_confidenceXage(df, cultivar, index, output_path, color_map=None, pd
     Returns:
         None: Sauvegarde l'image du boxplot en PNG et dans le PDF si spécifié.
     """
-    # Filtrer le DataFrame pour le cultivar sélectionné et éliminer les valeurs manquantes
-    df_cultivar = df[df['cultivar_n'] == cultivar].dropna(
-        subset=['age_plan', 'valeur'])
-    if df_cultivar.empty:
-        print(
-            f"Aucune donnée pour le cultivar '{cultivar}', graphique non généré.")
-        return
+    # Filtrer le DataFrame pour le cultivar si spécifié, sinon utiliser tout le DataFrame
+    if cultivar:
+        df_cultivar = df[df['cultivar_n'] == cultivar].dropna(
+            subset=['age_plan', 'valeur'])
+        if df_cultivar.empty:
+            print(
+                f"Aucune donnée pour le cultivar '{cultivar}', graphique non généré.")
+            return
+    else:
+        df_cultivar = df.dropna(subset=['age_plan', 'valeur'])
 
     # Définir les catégories d'âge (1 à 12 ans)
     age_categories = list(range(1, 13))
@@ -88,66 +92,58 @@ def boxnotch_confidenceXage(df, cultivar, index, output_path, color_map=None, pd
         data,
         notch=True,
         positions=boxplot_positions,
-        patch_artist=True,  # Permet de colorer l'intérieur du boxplot
+        patch_artist=True,
         widths=0.4,
-        showfliers=False,  # Cache les valeurs aberrantes
-        # Style de la médiane
+        showfliers=False,
         medianprops=dict(color="#051512", linewidth=1.5),
-        # Style des moustaches
         whiskerprops=dict(color="#051512", linewidth=1.2),
-        # Style des extrémités des moustaches
         capprops=dict(color="#051512", linewidth=1.2),
-        boxprops=dict(facecolor="#1e7b6f", color="#0a2925",
-                      alpha=0.8)  # Style de la boîte
+        boxprops=dict(facecolor="#1e7b6f", color="#0a2925", alpha=0.8)
     )
 
-    # Ajouter les points individuels décalés vers la gauche
+    # Ajouter les points individuels
     for i, age in enumerate(age_categories):
         subset = df_cultivar[df_cultivar['age_plan'] == age]
         if subset.empty:
             continue
-        # Position décalée à gauche
         x = np.random.normal(positions[i] - 0.25, 0.05, size=len(subset))
         y = subset['valeur']
         colors = [color_map.get(src, "grey") for src in subset['source']]
         ax.scatter(x, y, c=colors, s=20, alpha=0.7,
                    edgecolor="lightgrey", linewidth=0.5)
 
-    # Afficher 'NA' lorsque les données sont absentes pour une catégorie
-    for i, age in enumerate(age_categories):
-        if df_cultivar[df_cultivar['age_plan'] == age]['valeur'].empty:
-            ax.text(positions[i], 50, 'NA', ha='center', va='center',
-                    color='red', fontsize=14, fontweight='bold')
-
-    # Ajouter les métriques statistiques sous l'axe X
+    # Ajouter les statistiques sous l'axe X
     for i, age in enumerate(age_categories):
         subset = df_cultivar[df_cultivar['age_plan'] == age]['valeur']
         if subset.empty:
+            ax.text(positions[i], 50, 'NA', ha='center', va='center',
+                    color='red', fontsize=14, fontweight='bold')
             continue
         mean_val = subset.mean()
         median_val = subset.median()
         std_val = subset.std()
         count = len(subset)
 
-        # Texte des statistiques
+        # Ajouter les annotations
         ax.text(positions[i], 8, f"Nb={count}",
-                ha='center', va='center', fontsize=8, color="darkblue")
+                ha='center', fontsize=8, color="darkblue")
         ax.text(positions[i], 6, f"Moy={mean_val:.1f}",
-                ha='center', va='center', fontsize=8, color="darkblue")
+                ha='center', fontsize=8, color="darkblue")
         ax.text(positions[i], 4, f"Med={median_val:.1f}",
-                ha='center', va='center', fontsize=8, color="darkblue")
-        ax.text(positions[i], 2, f" σ = {std_val:.1f}",
-                ha='center', va='center', fontsize=8, color="darkblue")
+                ha='center', fontsize=8, color="darkblue")
+        ax.text(positions[i], 2, f"σ={std_val:.1f}",
+                ha='center', fontsize=8, color="darkblue")
 
     # Ajustement des ticks et des étiquettes de l'axe X
     ax.set_xticks(positions)
     ax.set_xticklabels([str(age) for age in age_categories], fontsize=12)
     ax.set_xlim(0.5, len(age_categories) + 0.5)
+    ax.set_ylim(0, 102)
 
-    # Ajouter la légende pour les 'source'
+    # Ajouter la légende
     handles = [plt.Line2D([0], [0], marker='o', color=color, linestyle='None', markersize=8, label=source)
                for source, color in color_map.items()]
-    ax.legend(handles=handles, title='Départament',
+    ax.legend(handles=handles, title='Département',
               loc='upper left', bbox_to_anchor=(1, 1))
 
     # Lignes verticales pour séparer les catégories
@@ -155,25 +151,24 @@ def boxnotch_confidenceXage(df, cultivar, index, output_path, color_map=None, pd
         plt.axvline(x=pos, color='grey', linestyle=':', linewidth=0.6)
 
     # Titres et étiquettes des axes
-    plt.title(
-        f"Incertitude de classification selon l'âge pour le cultivar {cultivar}", fontsize=16, weight='bold', pad=30)
-    plt.xlabel("Âge de la plantation (années)", fontsize=14)
-    plt.ylabel("Probabilité d’appartenance (%)", fontsize=14)
-    plt.ylim(0, 102)
+    title = "Incertitude de classification selon l'âge (tous cultivars confondus)"
+    if cultivar:
+        title += f" pour le cultivar {cultivar}"
+    ax.set_title(title, fontsize=16, weight='bold', pad=30)
+    ax.set_xlabel("Âge de la plantation (années)", fontsize=14)
+    ax.set_ylabel("Probabilité d’appartenance (%)", fontsize=14)
 
     # Sauvegarder la figure en PNG
-    cultivar_safe = cultivar.replace("/", "_")
-    filename = f"{index:02d}_{cultivar_safe}.png"
-    plt.savefig(os.path.join(output_path, filename),
-                bbox_inches="tight", dpi=300)
+    filename = f"{index:02d}_{cultivar.replace('/', '_')}.png" if cultivar else "00_All_Cultivars.png"
+    filepath = os.path.join(output_path, filename)
+    plt.savefig(filepath, bbox_inches="tight", dpi=300)
 
-    # Sauvegarder dans un PDF si disponible
-    if pdf is not None:
+    # Sauvegarder dans le PDF si fourni
+    if pdf:
         pdf.savefig(fig)
 
     plt.close(fig)
-    print(
-        f"Boxplot pour le cultivar '{cultivar}' sauvegardé sous le nom '{filename}'.")
+    print(f"Graphique sauvegardé sous le nom '{filename}'.")
 
 
 def grid_boxnotch_confidenceXage_par_anne(df, cultivar, output_path, color_palette, index, pdf=None):
@@ -417,20 +412,22 @@ def boxnotch_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf, outpu
     plt.close(fig)
 
 
-def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_limits, pdf, output_path, cultivar_index):
+def boxnotch_confidenceXage_lidar_metrics(
+    df, cultivar=None, metric=None, color_map=None, y_limits=None, pdf=None, output_path=None, cultivar_index=None
+):
     """
     Génère deux graphiques par page : un pour la "Probabilité d’appartenance (%)"
     et un pour une métrique Lidar spécifique, et sauvegarde chaque graphique individuellement en PNG.
 
     Args:
         df (DataFrame): Le DataFrame filtré.
-        cultivar (str): Le nom du cultivar analysé.
+        cultivar (str or None): Le nom du cultivar analysé ou None pour utiliser tout le DataFrame.
         metric (str): Le nom de la métrique Lidar analysée.
         color_map (dict): Un dictionnaire associant chaque 'source' à une couleur.
         y_limits (tuple): Les limites de l'axe Y pour la métrique Lidar.
         pdf (PdfPages): Un objet PdfPages pour sauvegarder les graphiques au format PDF.
         output_path (str): Le chemin du dossier pour sauvegarder les fichiers PNG individuels.
-        cultivar_index (int): L'index basé sur le cultivar.
+        cultivar_index (int or None): L'index basé sur le cultivar ou None si aucun cultivar spécifique.
 
     Returns:
         None: Sauvegarde les deux graphiques sur une page du PDF et en PNG.
@@ -447,20 +444,23 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     # Obtenir le nom complet de la métrique
     metric_full_name = metric_names.get(metric, metric)
 
-    # Filtrer le DataFrame pour le cultivar et éliminer les valeurs manquantes
-    df_cultivar = df[df['cultivar_n'] == cultivar].dropna(
-        subset=['age_plan', metric, 'valeur']
-    ).copy()
-
-    if df_cultivar.empty:
-        print(
-            f"Aucune donnée pour le cultivar '{cultivar}', métrique '{metric}'.")
-        return
+    # Filtrer le DataFrame pour le cultivar si spécifié, sinon utiliser tout le DataFrame
+    if cultivar:
+        df_cultivar = df[df['cultivar_n'] == cultivar].dropna(
+            subset=['age_plan', metric, 'valeur']
+        ).copy()
+        if df_cultivar.empty:
+            print(
+                f"Aucune donnée pour le cultivar '{cultivar}', métrique '{metric}'.")
+            return
+    else:
+        df_cultivar = df.dropna(subset=['age_plan', metric, 'valeur']).copy()
 
     # Définir les catégories d'âge (1 à 12 ans)
     age_categories = list(range(1, 13))
     df_cultivar['age_plan'] = pd.Categorical(
-        df_cultivar['age_plan'], categories=age_categories, ordered=True)
+        df_cultivar['age_plan'], categories=age_categories, ordered=True
+    )
 
     # Préparer les données pour les graphiques
     data_prob = [df_cultivar[df_cultivar['age_plan'] == age]['valeur']
@@ -512,9 +512,31 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     for pos in positions + 0.5:
         ax1.axvline(x=pos, color='grey', linestyle=':', linewidth=0.6)
 
+    # Ajouter les métriques statistiques sous l'axe X
+    for i, age in enumerate(age_categories):
+        subset = df_cultivar[df_cultivar['age_plan'] == age]['valeur']
+        if subset.empty:
+            continue
+        mean_val = subset.mean()
+        median_val = subset.median()
+        std_val = subset.std()
+        count = len(subset)
+
+        # Texte des statistiques
+        ax1.text(positions[i], 8, f"Nb={count}",
+                 ha='center', va='center', fontsize=8, color="darkblue")
+        ax1.text(positions[i], 6, f"Moy={mean_val:.1f}",
+                 ha='center', va='center', fontsize=8, color="darkblue")
+        ax1.text(positions[i], 4, f"Med={median_val:.1f}",
+                 ha='center', va='center', fontsize=8, color="darkblue")
+        ax1.text(positions[i], 2, f" σ = {std_val:.1f}",
+                 ha='center', va='center', fontsize=8, color="darkblue")
+
     # Titres et étiquettes pour le graphique 1
-    ax1.set_title(
-        f"Probabilité d’appartenance (%) selon l'âge pour le cultivar '{cultivar}'", fontsize=16, weight='bold')
+    title = f"Probabilité d’appartenance (%) selon l'âge"
+    if cultivar:
+        title += f" pour le cultivar '{cultivar}'"
+    ax1.set_title(title, fontsize=16, weight='bold')
     ax1.set_xlabel("Âge de la plantation (années)", fontsize=14)
     ax1.set_ylabel("Probabilité d’appartenance (%)", fontsize=14, labelpad=10)
     ax1.set_xticks(positions)
@@ -541,7 +563,7 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
         positions=boxplot_positions,
         patch_artist=True,
         widths=0.4,
-        showfliers=False,  # Cacher les valeurs aberrantes
+        showfliers=False,
         medianprops=dict(color="#051512", linewidth=1.5),
         whiskerprops=dict(color="#051512", linewidth=1.2),
         capprops=dict(color="#051512", linewidth=1.2),
@@ -566,14 +588,16 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
         ax2.axvline(x=pos, color='grey', linestyle=':', linewidth=0.6)
 
     # Titres et étiquettes pour le graphique 2
-    ax2.set_title(
-        f"{metric_full_name} selon l'âge pour le cultivar '{cultivar}'", fontsize=16, weight='bold')
+    title = f"{metric_full_name} selon l'âge"
+    if cultivar:
+        title += f" pour le cultivar '{cultivar}'"
+    ax2.set_title(title, fontsize=16, weight='bold')
     ax2.set_xlabel("Âge de la plantation (années)", fontsize=14)
     ax2.set_ylabel(metric_full_name, fontsize=14, labelpad=10)
     ax2.set_xticks(positions)
     ax2.set_xticklabels([str(age) for age in age_categories], fontsize=12)
     ax2.set_xlim(0.5, len(age_categories) + 0.5)
-    ax2.set_ylim(*y_limits)  # Limites spécifiques pour la métrique
+    ax2.set_ylim(*y_limits)
 
     # Ajouter la légende pour le graphique 2
     handles = [plt.Line2D([0], [0], marker='o', color=color, linestyle='None', markersize=8, label=source)
@@ -581,13 +605,16 @@ def boxnotch_confidenceXage_lidar_metrics(df, cultivar, metric, color_map, y_lim
     ax2.legend(handles=handles, title='Départament',
                loc='upper left', bbox_to_anchor=(1, 1))
 
-    # Ajouter les deux graphiques à la page PDF
+    # Ajouter les graphiques au PDF
     pdf.savefig(fig)
 
     # Sauvegarder les graphiques en PNG
-    filename = f"{cultivar_index:02d}_{cultivar}_{metric}.png".replace(
-        "/", "_")
+    filename = (
+        f"00_All_Confidence_X_{metric}.png" if not cultivar
+        else f"{cultivar_index:02d}_{cultivar}_{metric}.png"
+    ).replace("/", "_")
     filepath = os.path.join(output_path, filename)
+
     plt.savefig(filepath, bbox_inches="tight", dpi=300)
 
     # Fermer la figure
