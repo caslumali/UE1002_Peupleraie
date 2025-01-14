@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 import numpy as np
 
 # Charger les données
-df = pd.read_csv("./data_final/tableaux/df_parcelle_sans_dept10.csv")
+df = pd.read_csv("./data_final/tableaux/df_pixel_filtre_dept10.csv")
 
 # Pré-traitement des données
 df['date'] = pd.to_datetime(df['date'].astype(str),
