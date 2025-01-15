@@ -153,7 +153,7 @@ def boxnotch_confidenceXage(df, cultivar=None, index=None, output_path=None, col
     # Titres et étiquettes des axes
     title = "Incertitude de classification selon l'âge (tous cultivars confondus)"
     if cultivar:
-        title += f" pour le cultivar {cultivar}"
+        title = f"Incertitude de classification selon l'âge pour le cultivar {cultivar}"
     ax.set_title(title, fontsize=16, weight='bold', pad=30)
     ax.set_xlabel("Âge de la plantation (années)", fontsize=14)
     ax.set_ylabel("Probabilité d’appartenance (%)", fontsize=14)
